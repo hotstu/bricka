@@ -12,7 +12,7 @@ import kotlin.collections.ArrayList
 import kotlin.math.max
 
 
-class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour: Int , val viewStartHour: Int , val viewEndHour: Int  , val excludeHour :Array<Int>, val rowLimit : Int) {
+class ChaosViewer(val dbname:String, val outputName: String,val workStartHour: Int, val workEndHour: Int , val viewStartHour: Int , val viewEndHour: Int  , val excludeHour :Array<Int>, val rowLimit : Int) {
     private val holidays = arrayOf(
             "2021-1-1",
             "2021-2-11",
@@ -154,7 +154,7 @@ class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour
             val list = ArrayList<Entry>()
             try {
                 // create a database connection
-                connection = DriverManager.getConnection("jdbc:sqlite:${System.getProperty("user.dir")}/input.db")
+                connection = DriverManager.getConnection("jdbc:sqlite:${System.getProperty("user.dir")}/${dbname}.db")
                 connection.createStatement().use { statement ->
                     statement.queryTimeout = 30
                     val rs = statement.executeQuery("SELECT * FROM peach")
@@ -270,9 +270,6 @@ class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour
         File(outputName).writeText(tpl.replace("{{svg}}", sb.toString()))
         println("生成统计成功！")
     }
-
-
-
 }
 
 
@@ -290,7 +287,7 @@ data class Entry(val date: String, val hour: String, val min: String) {
 
 
 fun main() {
-    val chaos = ChaosViewer("test.html",   workStartHour = 9,  workEndHour = 18,  viewStartHour = 9,  viewEndHour = 21 ,  excludeHour  = arrayOf(12), rowLimit = 1080)
+    val chaos = ChaosViewer(dbname = "bricka", outputName = "build/test.html",   workStartHour = 9,  workEndHour = 18,  viewStartHour = 9,  viewEndHour = 21 ,  excludeHour  = arrayOf(12), rowLimit = 1080)
     chaos.build("2021-12-20", "2022-4-10")
 }
 

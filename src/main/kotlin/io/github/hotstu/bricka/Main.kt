@@ -26,7 +26,16 @@ object Main {
             val hour1 = receiver.hourFromTo.split("-").map { it.toInt() }
             val hour2 = receiver.viewHourFromTo.split("-").map { it.toInt() }
             val hour3 = receiver.excludeHours.split(",").map { it.toInt() }
-            ChaosViewer("bricka.html", hour1[0], hour1[1], hour2[0], hour2[1], hour3.toTypedArray(), receiver.wlimit).build(receiver.startDate, receiver.endDate)
+            ChaosViewer(
+                    dbname = "bricka",
+                    outputName = "build/bricka.html",
+                    workStartHour = hour1[0],
+                    workEndHour = hour1[1],
+                    viewStartHour = hour2[0],
+                    viewEndHour = hour2[1],
+                    excludeHour = hour3.toTypedArray(),
+                    rowLimit = receiver.wlimit
+            ).build(receiver.startDate, receiver.endDate)
             return
         }
         j.usage()
