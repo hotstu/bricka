@@ -288,7 +288,7 @@ data class Entry(val date: String, val hour: String, val min: String) {
 
 fun main() {
     val chaos = ChaosViewer(dbname = "bricka", outputName = "build/test.html",   workStartHour = 9,  workEndHour = 18,  viewStartHour = 9,  viewEndHour = 21 ,  excludeHour  = arrayOf(12), rowLimit = 1080)
-    chaos.build("2021-12-20", "2022-4-10")
+    chaos.build("2021-12-22", "2022-4-10")
 }
 
 
