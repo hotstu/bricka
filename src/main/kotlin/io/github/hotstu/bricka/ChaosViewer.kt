@@ -12,7 +12,7 @@ import kotlin.collections.ArrayList
 import kotlin.math.max
 
 
-class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour: Int , val viewStartHour: Int , val viewEndHour: Int  , val excludeHour :Array<Int>) {
+class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour: Int , val viewStartHour: Int , val viewEndHour: Int  , val excludeHour :Array<Int>, val rowLimit : Int) {
     private val holidays = arrayOf(
             "2021-1-1",
             "2021-2-11",
@@ -127,7 +127,6 @@ class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour
     private fun String.toDate(): Triple<Int, Int, Int> {
         val split = this.split("-")
         return Triple(split[0].toInt(), split[1].toInt(), split[2].toInt())
-
     }
 
     private fun isNormalDay(dateStr: String): Boolean {
@@ -177,9 +176,11 @@ class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour
         }
     }
     fun build(start: String, end: String) {
-        val sb = StringBuilder()
         val step = 16
-        var cursor = 0
+        val initHori = 0
+        val initVertical = 48
+
+        var cursor = initHori
         var typicalHeight = 0
         val list = queryAll()
         val totalTime = list.size
@@ -188,14 +189,16 @@ class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour
         val (year, month, day) = start.toDate()
         val (eyear, emonth, eday) = end.toDate()
 
+        var offsetVertical = 0
+        val sb = StringBuilder()
         dateSeq(year, month, day, eyear, emonth, eday)
                 .forEach { date ->
                     val key = date.formatDate()
                     val dayList = list.filter { it.date == key }
-                    sb.append("<g transform=\"translate(${cursor}, 0)\">")
+                    sb.append("<g transform=\"translate(${cursor}, ${offsetVertical})\">")
                     sb.append("\n")
                     val vStep = 16
-                    var vCursor = 32
+                    var vCursor = initVertical
                     val normal = isNormalDay(key)
                     hourSeq(viewStartHour, viewEndHour, excludeHour).forEach { hour ->
                         val hourType = when (normal) {
@@ -210,13 +213,11 @@ class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour
                                 2
                             }
                         }
-
                         val hourList = dayList.filter { it.hour == hour }
                         val size = hourList.size
 
                         when (hourType) {
                             0 -> {
-
                             }
                             1 -> {
                                 normalJbTime += size
@@ -250,190 +251,23 @@ class ChaosViewer(val outputName: String,val workStartHour: Int, val workEndHour
                     sb.append("</g>")
                     sb.append("\n")
                     cursor += step
-                    if (date.get(Calendar.DAY_OF_WEEK) == Calendar.DAY_OF_WEEK) {
+                    if (date.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
                         cursor += 8
+                        if (rowLimit > 0 && cursor >= rowLimit) {
+                            offsetVertical += typicalHeight
+                            offsetVertical -= 32
+                            cursor = initHori
+                        }
                     }
+
                 }
+        sb.append(" <text  x=\"16\" y=\"12\" class=\"title\">${start}~${end}</text>")
 
-        sb.append(" <text  x=\"16\" y=\"16\" class=\"title\">工作总时长${totalTime}分钟, 加班时长${normalJbTime + holidayJbTime}分钟, 非工作日${holidayJbTime}分钟</text>")
-        sb.insert(0, "<svg width=\"${cursor + step}\" height=\"${typicalHeight}\" >\n")
-        sb.insert(0, """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>chaosviewer1.0.0</title>
-            <style>
-            :root {
-            --color-scale-black: #010409;
-            --color-scale-white: #f0f6fc;
-            --color-scale-gray-0: #f0f6fc;
-            --color-scale-gray-1: #c9d1d9;
-            --color-scale-gray-2: #b1bac4;
-            --color-scale-gray-3: #8b949e;
-            --color-scale-gray-4: #6e7681;
-            --color-scale-gray-5: #484f58;
-            --color-scale-gray-6: #30363d;
-            --color-scale-gray-7: #21262d;
-            --color-scale-gray-8: #161b22;
-            --color-scale-gray-9: #0d1117;
-            --color-scale-blue-0: #cae8ff;
-            --color-scale-blue-1: #a5d6ff;
-            --color-scale-blue-2: #79c0ff;
-            --color-scale-blue-3: #58a6ff;
-            --color-scale-blue-4: #388bfd;
-            --color-scale-blue-5: #1f6feb;
-            --color-scale-blue-6: #1158c7;
-            --color-scale-blue-7: #0d419d;
-            --color-scale-blue-8: #0c2d6b;
-            --color-scale-blue-9: #051d4d;
-            --color-scale-green-0: #aff5b4;
-            --color-scale-green-1: #7ee787;
-            --color-scale-green-2: #56d364;
-            --color-scale-green-3: #3fb950;
-            --color-scale-green-4: #2ea043;
-            --color-scale-green-5: #238636;
-            --color-scale-green-6: #196c2e;
-            --color-scale-green-7: #0f5323;
-            --color-scale-green-8: #033a16;
-            --color-scale-green-9: #04260f;
-            --color-scale-yellow-0: #f8e3a1;
-            --color-scale-yellow-1: #f2cc60;
-            --color-scale-yellow-2: #e3b341;
-            --color-scale-yellow-3: #d29922;
-            --color-scale-yellow-4: #bb8009;
-            --color-scale-yellow-5: #9e6a03;
-            --color-scale-yellow-6: #845306;
-            --color-scale-yellow-7: #693e00;
-            --color-scale-yellow-8: #4b2900;
-            --color-scale-yellow-9: #341a00;
-            --color-scale-orange-0: #ffdfb6;
-            --color-scale-orange-1: #ffc680;
-            --color-scale-orange-2: #ffa657;
-            --color-scale-orange-3: #f0883e;
-            --color-scale-orange-4: #db6d28;
-            --color-scale-orange-5: #bd561d;
-            --color-scale-orange-6: #9b4215;
-            --color-scale-orange-7: #762d0a;
-            --color-scale-orange-8: #5a1e02;
-            --color-scale-orange-9: #3d1300;
-            --color-scale-red-0: #ffdcd7;
-            --color-scale-red-1: #ffc1ba;
-            --color-scale-red-2: #ffa198;
-            --color-scale-red-3: #ff7b72;
-            --color-scale-red-4: #f85149;
-            --color-scale-red-5: #da3633;
-            --color-scale-red-6: #b62324;
-            --color-scale-red-7: #8e1519;
-            --color-scale-red-8: #67060c;
-            --color-scale-red-9: #490202;
-            --color-scale-purple-0: #eddeff;
-            --color-scale-purple-1: #e2c5ff;
-            --color-scale-purple-2: #d2a8ff;
-            --color-scale-purple-3: #bc8cff;
-            --color-scale-purple-4: #a371f7;
-            --color-scale-purple-5: #8957e5;
-            --color-scale-purple-6: #6e40c9;
-            --color-scale-purple-7: #553098;
-            --color-scale-purple-8: #3c1e70;
-            --color-scale-purple-9: #271052;
-            --color-scale-pink-0: #ffdaec;
-            --color-scale-pink-1: #ffbedd;
-            --color-scale-pink-2: #ff9bce;
-            --color-scale-pink-3: #f778ba;
-            --color-scale-pink-4: #db61a2;
-            --color-scale-pink-5: #bf4b8a;
-            --color-scale-pink-6: #9e3670;
-            --color-scale-pink-7: #7d2457;
-            --color-scale-pink-8: #5e103e;
-            --color-scale-pink-9: #42062a;
-            --color-scale-coral-0: #FFDDD2;
-            --color-scale-coral-1: #FFC2B2;
-            --color-scale-coral-2: #FFA28B;
-            --color-scale-coral-3: #F78166;
-            --color-scale-coral-4: #EA6045;
-            --color-scale-coral-5: #CF462D;
-            --color-scale-coral-6: #AC3220;
-            --color-scale-coral-7: #872012;
-            --color-scale-coral-8: #640D04;
-            --color-scale-coral-9: #460701;
-        }
-
-
-        .square[data-type="0"][data-level="0"] {
-            fill: var(--color-scale-gray-2);
-            opacity: .5;
-        }
-        .square[data-type="0"][data-level="1"] {
-            fill: var(--color-scale-green-0);
-        }
-        .square[data-type="0"][data-level="2"] {
-            fill: var(--color-scale-green-5);
-        }
-        .square[data-type="0"][data-level="3"] {
-            fill: var(--color-scale-green-5);
-        }
-
-        .square[data-type="1"][data-level="0"] {
-            fill: var(--color-scale-gray-1);
-            opacity: .3;
-        }
-        .square[data-type="1"][data-level="1"] {
-            fill: var(--color-scale-pink-1);
-        }
-        .square[data-type="1"][data-level="2"] {
-            fill: var(--color-scale-pink-5);
-        }
-        .square[data-type="1"][data-level="3"] {
-            fill: var(--color-scale-pink-5);
-        }
-        .square[data-type="2"][data-level="0"] {
-            fill: var(--color-scale-gray-1);
-            opacity: .3;
-        }
-        .square[data-type="2"][data-level="1"] {
-            fill: var(--color-scale-red-1);
-        }
-        .square[data-type="2"][data-level="2"] {
-            fill: var(--color-scale-red-5);
-        }
-        .square[data-type="2"][data-level="3"] {
-            fill: var(--color-scale-red-5);
-        }
-    </style>
-        </head>
-
-        <body>
-    """.trimIndent())
+        sb.append(" <text  x=\"16\" y=\"32\" class=\"title\">工作总时长${totalTime}分钟, 加班时长${normalJbTime + holidayJbTime}分钟, 非工作日${holidayJbTime}分钟</text>")
+        sb.insert(0, "<svg width=\"${max(cursor + step, rowLimit)}\" height=\"${typicalHeight + offsetVertical}\" >\n")
         sb.append("</svg>")
-        sb.append("""
-            <div id="desc" style="margin-left:16px">点击方块查看详情</div>
-            <script>
-                var ${'$'} = document.querySelectorAll.bind(document)
-                ${'$'}(".square").forEach((it)=>{it.addEventListener("click",(e)=>{
-                    console.log(e)
-                    var date = e.target.attributes["data-date"].value
-                    var hour = e.target.attributes["data-hour"].value
-                    var type = e.target.attributes["data-type"].value
-                    var count = e.target.attributes["data-count"].value
-                    console.log(date, type, count)
-                    var typedesc = "正常上班"
-                    if(type == "1") {
-                        typedesc = "工作日加班"
-                    }
-                    if(type == "2") {
-                        typedesc = "节假日加班"
-                    }
-
-                    document.getElementById("desc").innerText = "" + date + " " +hour +"~" +(parseInt(hour) + 1)+"点, " + typedesc + ", 时长:" + count +"分钟" 
-                }) })
-            </script>
-        </body>
-        </html>
-    """.trimIndent())
-        File(outputName).writeText(sb.toString())
+        val tpl = this.javaClass.classLoader.getResource("TPL.html").readText()
+        File(outputName).writeText(tpl.replace("{{svg}}", sb.toString()))
         println("生成统计成功！")
     }
 
@@ -456,7 +290,7 @@ data class Entry(val date: String, val hour: String, val min: String) {
 
 
 fun main() {
-    val chaos = ChaosViewer("test.html",   workStartHour = 9,  workEndHour = 18,  viewStartHour = 9,  viewEndHour = 21 ,  excludeHour  = arrayOf(12))
+    val chaos = ChaosViewer("test.html",   workStartHour = 9,  workEndHour = 18,  viewStartHour = 9,  viewEndHour = 21 ,  excludeHour  = arrayOf(12), rowLimit = 1080)
     chaos.build("2021-12-20", "2022-4-10")
 }
 

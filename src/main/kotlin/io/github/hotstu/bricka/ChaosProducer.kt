@@ -10,7 +10,7 @@ import java.util.*
 
 class ChaosProducer(val dbname: String) {
     fun start() {
-        println("start...")
+        println("BRICKA starts as daemon...")
         runBlocking {
             var connection: Connection? = null
             try {
@@ -45,6 +45,6 @@ class ChaosProducer(val dbname: String) {
             }
 
         }
-        println("exit...")
+        println("BRICKA exits normally")
     }
 }
